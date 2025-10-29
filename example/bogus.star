@@ -5,4 +5,4 @@ content['deployment']['spec']['template']['spec']['volumes'] = [{"name": "efs-vo
 content['deployment']['spec']['replicas'] = 7
 out = yaml.dump(content)
 print(out)
-
+file.write("deployment_new.yaml", out)
