@@ -1,0 +1,28 @@
+deployment:
+    enabled: true
+    spec:
+        replicas: 1
+        template:
+            spec:
+                # Select parameters for customizing the container
+                container:
+                    ports: null
+                    envFrom: null
+                    env: null
+                    resources: null
+                    resizePolicy: null
+                    volumeMounts: null
+                    livenessProbe: null
+                    readinessProbe: null
+                    startupProbe: null
+                nodeSelector: null
+                serviceAccountName: null
+                serviceAccount: null
+                resources: null
+            volumes: null
+        strategy:
+            type: RollingUpdate
+            rollingUpdate:
+                maxUnavailable: 25%
+                maxSurge: 25%
+        minReadySeconds: 0
