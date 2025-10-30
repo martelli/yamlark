@@ -59,7 +59,7 @@ GOMODCACHE:
 GO_BUILD_FLAGS :=
 
 GOIMPORTS := $(GO) run golang.org/x/tools/cmd/goimports
-GOIMPORTS_LOCAL := github.com/fornellas/yamlark/
+GOIMPORTS_LOCAL := github.com/martelli/yamlark/
 
 STATICCHECK := $(GO) run honnef.co/go/tools/cmd/staticcheck
 
@@ -97,7 +97,7 @@ ifeq ($(GOOS)/$(GOARCH),windows/amd64)
 GO_TEST_FLAGS := -race $(GO_TEST_FLAGS)
 endif
 
-YAMLARK := $(GO) run github.com/fornellas/yamlark
+YAMLARK := $(GO) run github.com/martelli/yamlark
 YAMLARK_DEBOUNCE ?= 500ms
 YAMLARK_LOG_LEVEL ?= info
 YAMLARK_IGNORE_PATTERN ?= '.cache/**/*'
