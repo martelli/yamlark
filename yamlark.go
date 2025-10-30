@@ -5,9 +5,10 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+
+	yaml "github.com/goccy/go-yaml"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
-	yaml "github.com/goccy/go-yaml"
 )
 
 func interfaceToStarlarkValue(input interface{}) (starlark.Value, error) {
@@ -129,7 +130,7 @@ func starlarkValueToInterface(value starlark.Value) (interface{}, error) {
 
 func starlarkReadFile(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var path string
-	
+
 	if err := starlark.UnpackArgs("read", args, kwargs, "path", &path); err != nil {
 		return starlark.None, err
 	}
@@ -141,12 +142,12 @@ func starlarkReadFile(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 
 	fullPath := filepath.Join(baseDir, path)
 	cleanPath := filepath.Clean(fullPath)
-    
+
 	if !filepath.HasPrefix(cleanPath, baseDir) {
 		return starlark.None, fmt.Errorf("file.read: path traversal outside of base directory is forbidden")
 	}
 
-	data, err := os.ReadFile(cleanPath) 
+	data, err := os.ReadFile(cleanPath)
 	if err != nil {
 		return starlark.None, fmt.Errorf("file.read failed for path %s: %w", path, err)
 	}
@@ -157,7 +158,7 @@ func starlarkReadFile(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 func starlarkWriteFile(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var path string
 	var data string
-	
+
 	if err := starlark.UnpackArgs("write", args, kwargs, "path", &path, "data", &data); err != nil {
 		return starlark.None, err
 	}
@@ -169,12 +170,12 @@ func starlarkWriteFile(thread *starlark.Thread, _ *starlark.Builtin, args starla
 
 	fullPath := filepath.Join(baseDir, path)
 	cleanPath := filepath.Clean(fullPath)
-    
+
 	if !filepath.HasPrefix(cleanPath, baseDir) {
 		return starlark.None, fmt.Errorf("file.read: path traversal outside of base directory is forbidden")
 	}
 
-	err = os.WriteFile(cleanPath, []byte(data), 0644) 
+	err = os.WriteFile(cleanPath, []byte(data), 0644)
 	if err != nil {
 		return starlark.None, fmt.Errorf("file.read failed for path %s: %w", path, err)
 	}
@@ -184,7 +185,7 @@ func starlarkWriteFile(thread *starlark.Thread, _ *starlark.Builtin, args starla
 
 func starlarkYamlDump(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var data *starlark.Dict
-	
+
 	if err := starlark.UnpackArgs("dump", args, kwargs, "data", &data); err != nil {
 		return starlark.None, err
 	}
@@ -228,7 +229,7 @@ func starlarkYamlLoad(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 var FileModule = &starlarkstruct.Module{
 	Name: "file",
 	Members: starlark.StringDict{
-		"read": starlark.NewBuiltin("file.read", starlarkReadFile),
+		"read":  starlark.NewBuiltin("file.read", starlarkReadFile),
 		"write": starlark.NewBuiltin("file.write", starlarkWriteFile),
 	},
 }
@@ -242,9 +243,9 @@ var YamlModule = &starlarkstruct.Module{
 }
 
 func getBuiltins() starlark.StringDict {
-    return starlark.StringDict{
-		"file":  FileModule,
-		"yaml":  YamlModule,
+	return starlark.StringDict{
+		"file": FileModule,
+		"yaml": YamlModule,
 	}
 }
 
@@ -260,15 +261,14 @@ func starlarkLoad(thread *starlark.Thread, module string) (starlark.StringDict, 
 func executeStarlarkScript(filename string) error {
 	globals := getBuiltins()
 	thread := &starlark.Thread{Name: "main"}
-	thread.Load = starlarkLoad 
+	thread.Load = starlarkLoad
 	_, err := starlark.ExecFile(thread, filename, nil, globals)
-	
+
 	if err != nil {
 		return fmt.Errorf("starlark execution failed: %w", err)
 	}
 	return nil
 }
-
 
 func main() {
 	if len(os.Args) != 2 {
