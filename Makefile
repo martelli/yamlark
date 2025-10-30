@@ -175,6 +175,7 @@ lint: go-mod-tidy
 
 .PHONY: goimports
 goimports: go go-mod-tidy
+	$(GO) get golang.org/x/tools/cmd/goimports
 	$(GOIMPORTS) -w -local $(GOIMPORTS_LOCAL) $$(find . -name \*.go ! -path './.cache/*')
 lint: goimports
 
