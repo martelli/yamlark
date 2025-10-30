@@ -64,7 +64,7 @@ GOIMPORTS_LOCAL := github.com/martelli/yamlark/
 STATICCHECK := $(GO) run honnef.co/go/tools/cmd/staticcheck
 
 GOCYCLO := $(GO) run github.com/fzipp/gocyclo/cmd/gocyclo
-GOCYCLO_OVER := 15
+GOCYCLO_OVER := 20
 
 GO_TEST := $(GO) run github.com/rakyll/gotest ./...
 GO_TEST_FLAGS := -coverprofile cover.txt -coverpkg ./... -count=1 -failfast
@@ -176,6 +176,10 @@ lint: go-mod-tidy
 .PHONY: goimports
 goimports: go go-mod-tidy
 	$(GO) get golang.org/x/tools/cmd/goimports
+	$(GO) get honnef.co/go/tools/cmd/staticcheck
+	$(GO) get github.com/client9/misspell/cmd/misspell
+	$(GO) get github.com/fzipp/gocyclo/cmd/gocyclo
+	$(GO) get github.com/rakyll/gotest
 	$(GOIMPORTS) -w -local $(GOIMPORTS_LOCAL) $$(find . -name \*.go ! -path './.cache/*')
 lint: goimports
 

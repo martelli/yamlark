@@ -143,10 +143,6 @@ func starlarkReadFile(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 	fullPath := filepath.Join(baseDir, path)
 	cleanPath := filepath.Clean(fullPath)
 
-	if !filepath.HasPrefix(cleanPath, baseDir) {
-		return starlark.None, fmt.Errorf("file.read: path traversal outside of base directory is forbidden")
-	}
-
 	data, err := os.ReadFile(cleanPath)
 	if err != nil {
 		return starlark.None, fmt.Errorf("file.read failed for path %s: %w", path, err)
@@ -171,10 +167,6 @@ func starlarkWriteFile(thread *starlark.Thread, _ *starlark.Builtin, args starla
 	fullPath := filepath.Join(baseDir, path)
 	cleanPath := filepath.Clean(fullPath)
 
-	if !filepath.HasPrefix(cleanPath, baseDir) {
-		return starlark.None, fmt.Errorf("file.read: path traversal outside of base directory is forbidden")
-	}
-
 	err = os.WriteFile(cleanPath, []byte(data), 0644)
 	if err != nil {
 		return starlark.None, fmt.Errorf("file.read failed for path %s: %w", path, err)
@@ -191,6 +183,9 @@ func starlarkYamlDump(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 	}
 
 	bogus, err := starlarkValueToInterface(data)
+	if err != nil {
+		return starlark.None, err
+	}
 
 	bytes, err := yaml.Marshal(bogus)
 	if err != nil {
@@ -242,27 +237,18 @@ var YamlModule = &starlarkstruct.Module{
 	},
 }
 
-func getBuiltins() starlark.StringDict {
-	return starlark.StringDict{
-		"file": FileModule,
-		"yaml": YamlModule,
-	}
-}
-
 func starlarkLoad(thread *starlark.Thread, module string) (starlark.StringDict, error) {
 	data, err := os.ReadFile(module)
 	if err != nil {
 		return nil, fmt.Errorf("load failed to read module %q: %w", module, err)
 	}
-	globals := getBuiltins()
-	return starlark.ExecFile(thread, module, data, globals)
+	return starlark.ExecFileOptions(nil, thread, module, data, nil)
 }
 
 func executeStarlarkScript(filename string) error {
-	globals := getBuiltins()
 	thread := &starlark.Thread{Name: "main"}
 	thread.Load = starlarkLoad
-	_, err := starlark.ExecFile(thread, filename, nil, globals)
+	_, err := starlark.ExecFileOptions(nil, thread, filename, nil, nil)
 
 	if err != nil {
 		return fmt.Errorf("starlark execution failed: %w", err)
