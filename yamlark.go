@@ -8,6 +8,7 @@ import (
 
 	yaml "github.com/goccy/go-yaml"
 	"go.starlark.net/starlark"
+	"go.starlark.net/syntax"
 	"go.starlark.net/starlarkstruct"
 )
 
@@ -237,18 +238,25 @@ var YamlModule = &starlarkstruct.Module{
 	},
 }
 
+func getBuiltins() starlark.StringDict {
+    return starlark.StringDict{
+		"file":  FileModule,
+		"yaml":  YamlModule,
+	}
+}
+
 func starlarkLoad(thread *starlark.Thread, module string) (starlark.StringDict, error) {
 	data, err := os.ReadFile(module)
 	if err != nil {
 		return nil, fmt.Errorf("load failed to read module %q: %w", module, err)
 	}
-	return starlark.ExecFileOptions(nil, thread, module, data, nil)
+	return starlark.ExecFileOptions(syntax.LegacyFileOptions(), thread, module, data, getBuiltins())
 }
 
 func executeStarlarkScript(filename string) error {
 	thread := &starlark.Thread{Name: "main"}
 	thread.Load = starlarkLoad
-	_, err := starlark.ExecFileOptions(nil, thread, filename, nil, nil)
+	_, err := starlark.ExecFileOptions(syntax.LegacyFileOptions(), thread, filename, nil, getBuiltins())
 
 	if err != nil {
 		return fmt.Errorf("starlark execution failed: %w", err)
