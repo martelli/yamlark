@@ -8,7 +8,7 @@ require (
 )
 
 require (
-	github.com/BurntSushi/toml v1.4.1-0.20240526193622-a339e1f7089c // indirect
+	github.com/BurntSushi/toml v1.5.0 // indirect
 	github.com/client9/misspell v0.3.4 // indirect
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect

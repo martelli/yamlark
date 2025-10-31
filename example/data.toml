@@ -1,0 +1,6 @@
+[main]
+references = [
+  "obj1",
+  "obj2",
+  "obj3",
+]

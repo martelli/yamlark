@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -10,6 +11,7 @@ import (
 	"go.starlark.net/starlark"
 	"go.starlark.net/syntax"
 	"go.starlark.net/starlarkstruct"
+	"github.com/BurntSushi/toml"
 )
 
 func interfaceToStarlarkValue(input interface{}) (starlark.Value, error) {
@@ -129,11 +131,11 @@ func starlarkValueToInterface(value starlark.Value) (interface{}, error) {
 	}
 }
 
-func starlarkReadFile(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func starlarkFileRead(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var path string
 
 	if err := starlark.UnpackArgs("read", args, kwargs, "path", &path); err != nil {
-		return starlark.None, err
+		return starlark.None, fmt.Errorf("file.read: failed to unpack: %w", err)
 	}
 
 	baseDir, err := os.Getwd()
@@ -152,17 +154,17 @@ func starlarkReadFile(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 	return starlark.String(data), nil
 }
 
-func starlarkWriteFile(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func starlarkFileWrite(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var path string
 	var data string
 
 	if err := starlark.UnpackArgs("write", args, kwargs, "path", &path, "data", &data); err != nil {
-		return starlark.None, err
+		return starlark.None, fmt.Errorf("file.write: failed to unpack: %w", err)
 	}
 
 	baseDir, err := os.Getwd()
 	if err != nil {
-		return starlark.None, fmt.Errorf("file.read: could not get current directory: %w", err)
+		return starlark.None, fmt.Errorf("file.write: could not get current directory: %w", err)
 	}
 
 	fullPath := filepath.Join(baseDir, path)
@@ -170,22 +172,22 @@ func starlarkWriteFile(thread *starlark.Thread, _ *starlark.Builtin, args starla
 
 	err = os.WriteFile(cleanPath, []byte(data), 0644)
 	if err != nil {
-		return starlark.None, fmt.Errorf("file.read failed for path %s: %w", path, err)
+		return starlark.None, fmt.Errorf("file.write failed for path %s: %w", path, err)
 	}
 
 	return starlark.None, nil
 }
 
-func starlarkYamlDump(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func starlarkYamlPrint(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var data *starlark.Dict
 
-	if err := starlark.UnpackArgs("dump", args, kwargs, "data", &data); err != nil {
-		return starlark.None, err
+	if err := starlark.UnpackArgs("print", args, kwargs, "data", &data); err != nil {
+		return starlark.None, fmt.Errorf("yaml.print failed to unpack: %w", err)
 	}
 
 	bogus, err := starlarkValueToInterface(data)
 	if err != nil {
-		return starlark.None, err
+		return starlark.None, fmt.Errorf("yaml.print failed to convert: %w", err)
 	}
 
 	bytes, err := yaml.Marshal(bogus)
@@ -196,27 +198,61 @@ func starlarkYamlDump(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 	return starlark.String(string(bytes)), nil
 }
 
-func starlarkYamlLoad(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func starlarkYamlRead(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var path string
 	var y interface{}
 
 	if err := starlark.UnpackArgs("read", args, kwargs, "path", &path); err != nil {
-		return starlark.None, err
+		return starlark.None, fmt.Errorf("yaml.read failed to unpack: %w", err)
 	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("load failed to read YAML file %q: %w", path, err)
+		return nil, fmt.Errorf("yaml.read failed to read path %q: %w", path, err)
 	}
 
 	err = yaml.Unmarshal(data, &y)
 	if err != nil {
-		return nil, fmt.Errorf("load failed to unmarshal YAML file %q: %w", path, err)
+		return nil, fmt.Errorf("yaml.read failed to unmarshal path %q: %w", path, err)
 	}
 
 	dict, err := interfaceToStarlarkValue(y)
 	if err != nil {
-		return nil, fmt.Errorf("load failed to parse YAML file %q: %w", path, err)
+		return nil, fmt.Errorf("yaml.read failed to convert path %q: %w", path, err)
+	}
+
+	return dict, nil
+}
+
+func starlarkTomlRead(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+	var path string
+	var tomlObj interface{}
+
+	if err := starlark.UnpackArgs("read", args, kwargs, "path", &path); err != nil {
+		return starlark.None, fmt.Errorf("toml.read: failed to unpack: %w", err)
+	}
+
+	baseDir, err := os.Getwd()
+	if err != nil {
+		return starlark.None, fmt.Errorf("toml.read: could not get current directory: %w", err)
+	}
+
+	fullPath := filepath.Join(baseDir, path)
+	cleanPath := filepath.Clean(fullPath)
+
+	data, err := os.ReadFile(cleanPath)
+	if err != nil {
+		return starlark.None, fmt.Errorf("toml.read failed for path %s: %w", path, err)
+	}
+
+	_, err = toml.Decode(string(data), &tomlObj)
+	if err != nil {
+		return starlark.None, fmt.Errorf("toml.read failed to parse path %s: %w", path, err)
+	}
+
+	dict, err := interfaceToStarlarkValue(tomlObj)
+	if err != nil {
+		return nil, fmt.Errorf("toml.read failed to convert path %q: %w", path, err)
 	}
 
 	return dict, nil
@@ -225,16 +261,23 @@ func starlarkYamlLoad(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 var FileModule = &starlarkstruct.Module{
 	Name: "file",
 	Members: starlark.StringDict{
-		"read":  starlark.NewBuiltin("file.read", starlarkReadFile),
-		"write": starlark.NewBuiltin("file.write", starlarkWriteFile),
+		"read":  starlark.NewBuiltin("file.read", starlarkFileRead),
+		"write": starlark.NewBuiltin("file.write", starlarkFileWrite),
 	},
 }
 
 var YamlModule = &starlarkstruct.Module{
 	Name: "yaml",
 	Members: starlark.StringDict{
-		"read": starlark.NewBuiltin("yaml.read", starlarkYamlLoad),
-		"dump": starlark.NewBuiltin("yaml.dump", starlarkYamlDump),
+		"read": starlark.NewBuiltin("yaml.read", starlarkYamlRead),
+		"print": starlark.NewBuiltin("yaml.print", starlarkYamlPrint),
+	},
+}
+
+var TomlModule = &starlarkstruct.Module{
+	Name: "toml",
+	Members: starlark.StringDict{
+		"read": starlark.NewBuiltin("toml.read", starlarkTomlRead),
 	},
 }
 
@@ -242,6 +285,7 @@ func getBuiltins() starlark.StringDict {
     return starlark.StringDict{
 		"file":  FileModule,
 		"yaml":  YamlModule,
+		"toml":  TomlModule,
 	}
 }
 
@@ -265,12 +309,13 @@ func executeStarlarkScript(filename string) error {
 }
 
 func main() {
+
 	if len(os.Args) != 2 {
-		fmt.Printf("\n--- Execution Error ---\nusage: lark <script>\n")
+		log.Fatal("\n--- Execution Error ---\nusage: lark <script>\n")
 		return
 	}
 
 	if err := executeStarlarkScript(os.Args[1]); err != nil {
-		fmt.Printf("\n--- Execution Error ---\n%v\n", err)
+		log.Fatal("\n--- Execution Error ---\n%v\n", err)
 	}
 }
