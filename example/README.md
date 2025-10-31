@@ -8,7 +8,7 @@ It will create a new `deployment_new.yaml` where you can verify the differences:
 
 ```
 --- deployment.yaml	2025-10-30 00:07:08
-+++ deployment_new.yaml	2025-10-30 00:07:14
++++ deployment_new.yaml	2025-11-01 00:04:04
 @@ -2,7 +2,7 @@
    enabled: true
    spec:
@@ -18,13 +18,19 @@ It will create a new `deployment_new.yaml` where you can verify the differences:
      strategy:
        rollingUpdate:
          maxSurge: 25%
-@@ -24,4 +24,8 @@
+@@ -24,4 +24,14 @@
          resources: null
          serviceAccount: null
          serviceAccountName: null
 +        volumes:
-+        - name: efs-volume
++        - name: obj1-volume
 +          persistentVolumeClaim:
-+            claimName: efs-shared-pvc
++            claimName: obj1-shared-pvc
++        - name: obj2-volume
++          persistentVolumeClaim:
++            claimName: obj2-shared-pvc
++        - name: obj3-volume
++          persistentVolumeClaim:
++            claimName: obj3-shared-pvc
        volumes: null
 ```
