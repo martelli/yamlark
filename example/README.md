@@ -2,7 +2,7 @@
 
 After adding `yamlark` to your PATH, execute it with:
 
-`yamlark bogus.star` or `./bogus.star` (note the `shabang`)
+`yamlark example.star` or `./example.star` (note the `shabang`)
 
 It will create a new `deployment_new.yaml` where you can verify the differences:
 
