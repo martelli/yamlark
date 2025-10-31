@@ -10,7 +10,7 @@ def mangle():
 	volumes.append(e)
     content['deployment']['spec']['replicas'] = 7
     content['deployment']['spec']['template']['spec']['volumes'] = volumes
-    out = yaml.print(content)
+    out = yaml.dumps(content)
     print(out)
     file.write("deployment_new.yaml", out)
 

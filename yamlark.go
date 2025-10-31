@@ -178,16 +178,16 @@ func starlarkFileWrite(thread *starlark.Thread, _ *starlark.Builtin, args starla
 	return starlark.None, nil
 }
 
-func starlarkYamlPrint(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
+func starlarkYamlDumps(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
 	var data *starlark.Dict
 
-	if err := starlark.UnpackArgs("print", args, kwargs, "data", &data); err != nil {
-		return starlark.None, fmt.Errorf("yaml.print failed to unpack: %w", err)
+	if err := starlark.UnpackArgs("dumps", args, kwargs, "data", &data); err != nil {
+		return starlark.None, fmt.Errorf("yaml.dumps failed to unpack: %w", err)
 	}
 
 	bogus, err := starlarkValueToInterface(data)
 	if err != nil {
-		return starlark.None, fmt.Errorf("yaml.print failed to convert: %w", err)
+		return starlark.None, fmt.Errorf("yaml.dumps failed to convert: %w", err)
 	}
 
 	bytes, err := yaml.Marshal(bogus)
@@ -270,7 +270,7 @@ var YamlModule = &starlarkstruct.Module{
 	Name: "yaml",
 	Members: starlark.StringDict{
 		"read": starlark.NewBuiltin("yaml.read", starlarkYamlRead),
-		"print": starlark.NewBuiltin("yaml.print", starlarkYamlPrint),
+		"dumps": starlark.NewBuiltin("yaml.dumps", starlarkYamlDumps),
 	},
 }
 
