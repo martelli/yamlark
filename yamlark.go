@@ -7,11 +7,11 @@ import (
 	"path/filepath"
 	"reflect"
 
+	"github.com/BurntSushi/toml"
 	yaml "github.com/goccy/go-yaml"
 	"go.starlark.net/starlark"
-	"go.starlark.net/syntax"
 	"go.starlark.net/starlarkstruct"
-	"github.com/BurntSushi/toml"
+	"go.starlark.net/syntax"
 )
 
 func interfaceToStarlarkValue(input interface{}) (starlark.Value, error) {
@@ -269,7 +269,7 @@ var FileModule = &starlarkstruct.Module{
 var YamlModule = &starlarkstruct.Module{
 	Name: "yaml",
 	Members: starlark.StringDict{
-		"read": starlark.NewBuiltin("yaml.read", starlarkYamlRead),
+		"read":  starlark.NewBuiltin("yaml.read", starlarkYamlRead),
 		"dumps": starlark.NewBuiltin("yaml.dumps", starlarkYamlDumps),
 	},
 }
@@ -282,10 +282,10 @@ var TomlModule = &starlarkstruct.Module{
 }
 
 func getBuiltins() starlark.StringDict {
-    return starlark.StringDict{
-		"file":  FileModule,
-		"yaml":  YamlModule,
-		"toml":  TomlModule,
+	return starlark.StringDict{
+		"file": FileModule,
+		"yaml": YamlModule,
+		"toml": TomlModule,
 	}
 }
 
