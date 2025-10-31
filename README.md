@@ -5,7 +5,7 @@ The idea is simple: read YAML config files into your starlark script with `yaml.
 
 Now it's a dictionary that can be easily manipulated.
 
-Once it's done, convert it back to a YAML string using `yaml.dump()`.
+Once it's done, convert it back to a YAML string using `yaml.dumps()`.
 
 Additionally, you can read and write files with `file.read()` and `file.write()`.
 
