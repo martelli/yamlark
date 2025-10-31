@@ -311,11 +311,10 @@ func executeStarlarkScript(filename string) error {
 func main() {
 
 	if len(os.Args) != 2 {
-		log.Fatal("\n--- Execution Error ---\nusage: lark <script>\n")
-		return
+		log.Fatal("--- Execution Error ---\nusage: lark <script>\n")
 	}
 
 	if err := executeStarlarkScript(os.Args[1]); err != nil {
-		log.Fatal("\n--- Execution Error ---\n%v\n", err)
+		log.Fatalf("--- Execution Error ---\n%v\n", err)
 	}
 }
