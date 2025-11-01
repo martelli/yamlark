@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"reflect"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/BurntSushi/toml"
 	yaml "github.com/goccy/go-yaml"
+	log "github.com/sirupsen/logrus"
 	"go.starlark.net/starlark"
 	"go.starlark.net/starlarkstruct"
 	"go.starlark.net/syntax"
@@ -303,7 +303,7 @@ func printToStdout(thread *starlark.Thread, msg string) {
 
 func executeStarlarkScript(filename string) error {
 	thread := &starlark.Thread{
-		Name: "main",
+		Name:  "main",
 		Print: printToStdout,
 	}
 	thread.Load = starlarkLoad
