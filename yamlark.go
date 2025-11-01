@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"reflect"
 
+	log "github.com/sirupsen/logrus"
 	"github.com/BurntSushi/toml"
 	yaml "github.com/goccy/go-yaml"
 	"go.starlark.net/starlark"
@@ -148,7 +148,7 @@ func starlarkFileRead(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 
 	data, err := os.ReadFile(cleanPath)
 	if err != nil {
-		return starlark.None, fmt.Errorf("file.read failed for path %s: %w", path, err)
+		return starlark.None, fmt.Errorf("file.read failed: %w", err)
 	}
 
 	return starlark.String(data), nil
@@ -208,17 +208,17 @@ func starlarkYamlRead(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, fmt.Errorf("yaml.read failed to read path %q: %w", path, err)
+		return nil, fmt.Errorf("yaml.read failed: %w", err)
 	}
 
 	err = yaml.Unmarshal(data, &y)
 	if err != nil {
-		return nil, fmt.Errorf("yaml.read failed to unmarshal path %q: %w", path, err)
+		return nil, fmt.Errorf("yaml.read failed to unmarshal path '%s': %w", path, err)
 	}
 
 	dict, err := interfaceToStarlarkValue(y)
 	if err != nil {
-		return nil, fmt.Errorf("yaml.read failed to convert path %q: %w", path, err)
+		return nil, fmt.Errorf("yaml.read failed to convert path '%s': %w", path, err)
 	}
 
 	return dict, nil
@@ -242,17 +242,17 @@ func starlarkTomlRead(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 
 	data, err := os.ReadFile(cleanPath)
 	if err != nil {
-		return starlark.None, fmt.Errorf("toml.read failed for path %s: %w", path, err)
+		return starlark.None, fmt.Errorf("toml.read failed: %w", err)
 	}
 
 	_, err = toml.Decode(string(data), &tomlObj)
 	if err != nil {
-		return starlark.None, fmt.Errorf("toml.read failed to parse path %s: %w", path, err)
+		return starlark.None, fmt.Errorf("toml.read failed to parse path '%s': %w", path, err)
 	}
 
 	dict, err := interfaceToStarlarkValue(tomlObj)
 	if err != nil {
-		return nil, fmt.Errorf("toml.read failed to convert path %q: %w", path, err)
+		return nil, fmt.Errorf("toml.read failed to convert path '%s': %w", path, err)
 	}
 
 	return dict, nil
@@ -297,13 +297,20 @@ func starlarkLoad(thread *starlark.Thread, module string) (starlark.StringDict, 
 	return starlark.ExecFileOptions(syntax.LegacyFileOptions(), thread, module, data, getBuiltins())
 }
 
+func printToStdout(thread *starlark.Thread, msg string) {
+	fmt.Println(msg)
+}
+
 func executeStarlarkScript(filename string) error {
-	thread := &starlark.Thread{Name: "main"}
+	thread := &starlark.Thread{
+		Name: "main",
+		Print: printToStdout,
+	}
 	thread.Load = starlarkLoad
 	_, err := starlark.ExecFileOptions(syntax.LegacyFileOptions(), thread, filename, nil, getBuiltins())
 
 	if err != nil {
-		return fmt.Errorf("starlark execution failed: %w", err)
+		return err
 	}
 	return nil
 }
@@ -311,10 +318,11 @@ func executeStarlarkScript(filename string) error {
 func main() {
 
 	if len(os.Args) != 2 {
-		log.Fatal("--- Execution Error ---\nusage: lark <script>\n")
+		log.Error("Usage: lark <script>")
+		return
 	}
 
 	if err := executeStarlarkScript(os.Args[1]); err != nil {
-		log.Fatalf("--- Execution Error ---\n%v\n", err)
+		log.WithFields(log.Fields{"err": err}).Error("Execution Error ")
 	}
 }
