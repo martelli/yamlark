@@ -7,37 +7,21 @@ XDG_CACHE_HOME ?= $(HOME)/.cache
 YAMLARK_CACHE ?= $(XDG_CACHE_HOME)/yamlark
 
 export GOVERSION := $(shell cat .goversion)
-ifneq ($(.SHELLSTATUS),0)
-  $(error cat .goversion failed! output was $(GOVERSION))
-endif
 
 GOOS_SHELL := case $$(uname -s) in Linux) echo linux;; Darwin) echo darwin;; *) echo Unknown system $$(uname -s) 1>&2 ; exit 1 ;; esac
 export GOOS ?= $(shell $(GOOS_SHELL))
-ifneq ($(.SHELLSTATUS),0)
-  $(error GOOS failed! output was $(GOOS))
-endif
 .PHONY: GOOS
 GOOS:
 	@echo $(GOOS)
 
-GOARCH_SHELL := case $$(uname -m) in i[23456]86) echo 386;; x86_64) echo amd64;; armv6l|armv7l) echo arm;; aarch64) echo arm64;; *) echo Unknown machine $$(uname -m) 1>&2 ; exit 1 ;; esac
+GOARCH_SHELL := case $$(uname -m) in i[23456]86) echo 386;; x86_64) echo amd64;; armv6l|armv7l) echo arm;; aarch64|arm64) echo arm64;; *) echo Unknown machine $$(uname -m) 1>&2 ; exit 1 ;; esac
 export GOARCH ?= $(shell $(GOARCH_SHELL))
-ifneq ($(.SHELLSTATUS),0)
-  $(error GOARCH failed! output was $(GOARCH))
-endif
-export GOARCH ?= $(shell $(GOARCH_SHELL))
-ifneq ($(.SHELLSTATUS),0)
-  $(error GOARCH failed! output was $(GOARCH))
-endif
 .PHONY: GOARCH
 GOARCH:
 	@echo $(GOARCH)
 
 GOARCH_DOWNLOAD_SHELL := case $(GOARCH) in 386) echo 386;; amd64) echo amd64;; arm) echo armv6l;; arm64) echo arm64;; *) echo Unknown GOARCH=$(GOARCH) 1>&2 ; exit 1 ;; esac
 GOARCH_DOWNLOAD ?= $(shell $(GOARCH_DOWNLOAD_SHELL))
-ifneq ($(.SHELLSTATUS),0)
-  $(error GOARCH_DOWNLOAD_SHELL failed! output was $(GOARCH_DOWNLOAD))
-endif
 
 GOROOT_PREFIX := $(YAMLARK_CACHE)/GOROOT
 GOROOT := $(GOROOT_PREFIX)/$(GOVERSION).$(GOOS)-$(GOARCH)
@@ -133,7 +117,7 @@ go:
 	mkdir -p $(GOROOT_PREFIX)
 	curl -sSfL  https://go.dev/dl/$(GOVERSION).$(GOOS)-$(GOARCH_DOWNLOAD).tar.gz | \
 		tar -zx -C $(GOROOT_PREFIX) && \
-		touch $(GOROOT_PREFIX)/go &&
+		touch $(GOROOT_PREFIX)/go && \
 		mv $(GOROOT_PREFIX)/go $(GOROOT)
 
 .PHONY: clean-go

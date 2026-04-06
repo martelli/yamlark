@@ -1,0 +1,39 @@
+# SHA256(/Users/martelli/Projects/yamlark/example/data.toml) = 660f3b54d90f288eca4f73ad907e1969955d62c119c0adc24b17827987ce17c3
+# SHA256(/Users/martelli/Projects/yamlark/example/deployment.yaml) = 00812592d82ee60bd4be651fed66be8375464ce256c246e94d5c57bbf8b2d4cb
+deployment:
+  enabled: true
+  spec:
+    minReadySeconds: 0
+    replicas: 7
+    strategy:
+      rollingUpdate:
+        maxSurge: 25%
+        maxUnavailable: 25%
+      type: RollingUpdate
+    template:
+      spec:
+        container:
+          env: null
+          envFrom: null
+          livenessProbe: null
+          ports: null
+          readinessProbe: null
+          resizePolicy: null
+          resources: null
+          startupProbe: null
+          volumeMounts: null
+        nodeSelector: null
+        resources: null
+        serviceAccount: null
+        serviceAccountName: null
+        volumes:
+        - name: obj1-volume
+          persistentVolumeClaim:
+            claimName: obj1-shared-pvc
+        - name: obj2-volume
+          persistentVolumeClaim:
+            claimName: obj2-shared-pvc
+        - name: obj3-volume
+          persistentVolumeClaim:
+            claimName: obj3-shared-pvc
+      volumes: null

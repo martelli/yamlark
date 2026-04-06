@@ -1,10 +1,12 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
+	"sort"
 
 	"github.com/BurntSushi/toml"
 	yaml "github.com/goccy/go-yaml"
@@ -13,6 +15,8 @@ import (
 	"go.starlark.net/starlarkstruct"
 	"go.starlark.net/syntax"
 )
+
+var inputHashes = make(map[string]string)
 
 func interfaceToStarlarkValue(input interface{}) (starlark.Value, error) {
 	if input == nil {
@@ -151,6 +155,8 @@ func starlarkFileRead(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 		return starlark.None, fmt.Errorf("file.read failed: %w", err)
 	}
 
+	inputHashes[cleanPath] = fmt.Sprintf("%x", sha256.Sum256(data))
+
 	return starlark.String(data), nil
 }
 
@@ -195,7 +201,19 @@ func starlarkYamlDumps(thread *starlark.Thread, _ *starlark.Builtin, args starla
 		return starlark.None, err
 	}
 
-	return starlark.String(string(bytes)), nil
+	var commentStr string
+	if len(inputHashes) > 0 {
+		var paths []string
+		for p := range inputHashes {
+			paths = append(paths, p)
+		}
+		sort.Strings(paths)
+		for _, p := range paths {
+			commentStr += fmt.Sprintf("# SHA256(%s) = %s\n", p, inputHashes[p])
+		}
+	}
+
+	return starlark.String(commentStr + string(bytes)), nil
 }
 
 func starlarkYamlRead(thread *starlark.Thread, _ *starlark.Builtin, args starlark.Tuple, kwargs []starlark.Tuple) (starlark.Value, error) {
@@ -209,6 +227,13 @@ func starlarkYamlRead(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("yaml.read failed: %w", err)
+	}
+
+	absPath, err := filepath.Abs(path)
+	if err == nil {
+		inputHashes[absPath] = fmt.Sprintf("%x", sha256.Sum256(data))
+	} else {
+		inputHashes[path] = fmt.Sprintf("%x", sha256.Sum256(data))
 	}
 
 	err = yaml.Unmarshal(data, &y)
@@ -244,6 +269,8 @@ func starlarkTomlRead(thread *starlark.Thread, _ *starlark.Builtin, args starlar
 	if err != nil {
 		return starlark.None, fmt.Errorf("toml.read failed: %w", err)
 	}
+
+	inputHashes[cleanPath] = fmt.Sprintf("%x", sha256.Sum256(data))
 
 	_, err = toml.Decode(string(data), &tomlObj)
 	if err != nil {

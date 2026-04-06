@@ -1,0 +1,5 @@
+y = yaml.read("input.yaml")
+y["new_key"] = "new_value"
+out = yaml.dumps(y)
+print("--- OUTPUT KEY ---")
+print(out)
